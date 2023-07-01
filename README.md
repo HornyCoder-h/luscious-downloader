@@ -1,3 +1,5 @@
+# This project seems to have been scrapped by the maintainer. I will look into this when I have the time and see what I can do.
+
 # Luscious Downloader
 CLI tool for downloading [Luscious](https://luscious.net) Albums
 
