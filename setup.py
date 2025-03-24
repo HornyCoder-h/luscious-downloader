@@ -10,6 +10,7 @@ with open('README.md') as ld:
 
 setup(
     name='luscious-downloader',
+    requirements=requirements,
     version=__version__,
     packages=find_packages(),
     keywords='luscious, album, downloader',
