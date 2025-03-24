@@ -1,16 +1,19 @@
 # This project seems to have been scrapped by the maintainer. I will look into this when I have the time and see what I can do.
 
 # Luscious Downloader
+
 CLI tool for downloading [Luscious](https://luscious.net) Albums
 
 ![Downloads](https://img.shields.io/pypi/dm/luscious-downloader?style=flat-square)
 ![License](https://img.shields.io/github/license/lucas8x/luscious-downloader?style=flat-square)
 
 ## Requirements
+
 * Python 3
 * requests
 
 ## Installation
+
 *If you have python and git installed.*
 <pre><code>git clone https://github.com/Lucas8x/luscious-downloader.git
 cd luscious-downloader
@@ -21,13 +24,16 @@ python setup.py install
 </code></pre>
 
 ## Installation #2 (Windows Only)
+
 *If you don't have python installed.*
+
 1. [Download](https://github.com/Lucas8x/luscious-downloader/archive/master.zip).
 2. Extract.
 3. Run `run.bat`.
 4. Wait install.
 
 ## Usage
+
 **NOTE:** The default download folder will be the path where you are executing the command.\
 **NOTE²:** You can enter multiple url and ids separated by commas.
 
@@ -74,6 +80,7 @@ lsd -s yuri -d --page 2 --max-page 5
 </code></pre>
 
 ## Menu
+
 1. Enter albums URL or ID.
 2. Download all user albums.
 3. Download albums from list.txt.
@@ -81,6 +88,7 @@ lsd -s yuri -d --page 2 --max-page 5
 0. Exit.
 
 ### Settings
+
 1. Change Directory (Change albums download directory. Default = "./Albums/").
 2. CPU Pool (Default = Your CPU Count).
 3. Picture Retries (download attempts for each picture. Default = 5).

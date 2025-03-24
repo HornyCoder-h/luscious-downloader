@@ -1,77 +1,61 @@
-# -*- coding: utf-8 -*-
 import argparse
 import os
-
-from luscious_dl.parser import extract_album_id, extract_user_id, extract_ids_from_list
+from pathlib import Path
 
 
 def command_line() -> argparse.Namespace:
-  """
-  Defines the command line interface.
-  :return: arguments
-  """
-  parser = argparse.ArgumentParser(prog='Luscious Downloader', description='Download albums')
+    """
+    Defines the command line interface.
+    :return: arguments
+    """
+    parser = argparse.ArgumentParser(prog='Luscious Downloader', description='Download albums from luscious.net')
 
-  group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--album', '-a', dest='album_inputs', action='store', help='download album by url or id')
+    group.add_argument('--user', '-u', dest='user_inputs', action='store', help='download all user albums by url or id')
+    group.add_argument('--search', '-s', dest='keyword', action='store', help='search albums by keyword')
+    group.add_argument('--list', '-l', dest='read_list', action='store_true',
+                       help="read a file list.txt in the folder you're running this command")
 
-  group.add_argument('--album', '-a', dest='album_inputs', action='store', help='download album by url or id')
+    # user args
+    parser.add_argument('--favorites', '-f', dest='only_favorites', action='store_true',
+                        help='download only user favorites')
+    parser.add_argument('--group', '--agroup', '-g', dest='group_by_user', action='store_true',
+                        help='when downloading user albums they will be grouped by name')
 
-  group.add_argument('--user', '-u', dest='user_inputs', action='store', help='download all user albums by url or id')
+    # search args
+    parser.add_argument('--download', '-d', dest='search_download', action='store_true',
+                        help='download albums from search results')
+    parser.add_argument('--page', dest='page', action='store', type=int, default=1,
+                        help='page number of search results')
+    parser.add_argument('--max-page', dest='max_pages', action='store', type=int, default=1,
+                        help='max pages of search results')
+    parser.add_argument('--sorting', dest='sorting', action='store', default='date_trending',
+                        help='search sorting', choices=['date_trending', 'rating_all_time'])
 
-  group.add_argument('--search', '-s', dest='keyword', action='store', help='search albums by keyword')
+    # generate options
+    parser.add_argument('--pdf', '-p', dest='gen_pdf', action='store_true',
+                        help='enable pdf file generation')
+    parser.add_argument('--cbz', '-c', dest='gen_cbz', action='store_true',
+                        help='enable cbz file generation')
+    parser.add_argument('--rm-origin-dir', dest='rm_origin_dir', action='store_true',
+                        help='remove downloaded album dir when generated PDF file.')
 
-  # search args
-  parser.add_argument('--download', '-d', dest='search_download', action='store_true',
-                      help='download albums from search results')
+    # downloader args
+    parser.add_argument('--output', '-o', dest='output_dir', action='store', default=Path.cwd(),
+                        help='output directory')
+    parser.add_argument('--threads', '-t', dest='threads', action='store', type=int, default=os.cpu_count(),
+                        help='how many download threads')
+    parser.add_argument('--retries', '-R', dest='retries', action='store', type=int, default=5, help='download retries')
+    parser.add_argument('--timeout', '-T', dest='timeout', action='store', type=int, default=30,
+                        help='download timeout')
+    parser.add_argument('--delay', '-D', dest='delay', action='store', type=int, default=0,
+                        help='delay between downloading multiple albums')
+    parser.add_argument('--format', dest='foldername_format', action='store', default='[%i]%t',
+                        help='format album folder name')
 
-  parser.add_argument('--page', dest='page', action='store', type=int, default=1, help='page numebr of search results')
-
-  parser.add_argument('--max-page', dest='max_pages', action='store', type=int, default=1,
-                      help='max pages of search results')
-
-  '''parser.add_argument('--sorting', dest='sorting', action='store', default='date_trending',
-                      help='search sorting', choices=['date_trending', 'search_score', 'rating_all_time'])'''
-
-  # download args
-  parser.add_argument('--output', '-o', dest='directory', action='store', default=os.getcwd(), help='output directory')
-
-  parser.add_argument('--threads', '-t', dest='threads', action='store', type=int, default=os.cpu_count(),
-                      help='how many download threads')
-
-  parser.add_argument('--retries', '-R', dest='retries', action='store', type=int, default=5, help='download retries')
-
-  parser.add_argument('--timeout', '-T', dest='timeout', action='store', type=int, default=30, help='download timeout')
-
-  parser.add_argument('--delay', '-D', dest='delay', action='store', type=int, default=0,
-                      help='delay between downloading multiple albums')
-
-  args = parser.parse_args()
-
-  if args.threads <= 0:
-    args.threads = os.cpu_count()
-  if args.page <= 0:
-    args.page = 1
-  if args.max_pages <= 0:
-    args.max_pages = 1
-  if args.page > args.max_pages:
-    args.max_pages = args.page
-
-  args.keyword = args.keyword.strip() if args.keyword else None
-
-  if args.album_inputs:
-    inputs = [input_.strip() for input_ in args.album_inputs.split(',')]
-    args.albums_ids = extract_ids_from_list(inputs, extract_album_id)
-  else:
-    args.albums_ids = None
-
-  if args.user_inputs:
-    inputs = [input_.strip() for input_ in args.user_inputs.split(',')]
-    args.users_ids = extract_ids_from_list(inputs, extract_user_id)
-  else:
-    args.users_ids = None
-
-  return args
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
-  command_line()
+    command_line()

@@ -1,80 +1,99 @@
-# -*- coding: utf-8 -*-
-import os
-from typing import List, Callable
+from copy import copy
 
-from luscious_dl.logger import logger, logger_file_handler
-from luscious_dl.utils import cls, create_default_files, open_config_menu, get_config_setting, read_list, info, \
-  ListOrganizer
-from luscious_dl.downloader import Downloader
-from luscious_dl.parser import extract_user_id, is_a_valid_id, extract_album_id, extract_ids_from_list
-from luscious_dl.start import albums_download, users_download
+from luscious_dl.logger import logger_file_handler, logger
+from luscious_dl.parser import is_a_valid_integer
+from luscious_dl.start import start
+from luscious_dl.utils import cls, create_default_files, open_config_menu, read_list, info, list_txt_organizer, \
+    inputs_string_to_list, get_root_path, load_settings
 
 
-def list_txt_organizer(items: List[str], prefix: str) -> None:
-  """
-  :param items: List of urls or ids
-  :param prefix: album/user
-  """
-  for item in items:
-    ListOrganizer.remove(item)
-    ListOrganizer.add(f'{prefix}-{int(item)}' if is_a_valid_id(item) else item)
+def showMenu():
+    print(
+        'Options:',
+        '1 - Download albums by URL or ID.',
+        '2 - Download all user albums.',
+        '3 - Download all user favorites.',
+        '4 - Search albums by keyword.',
+        '5 - Download albums from list.txt.',
+        '6 - Settings.',
+        '0 - Exit.',
+        sep='\n'
+    )
 
 
-def download(function: Callable[[List[int], Downloader], None], inputs: List[str], extractor: Callable[[str], int],
-             downloader: Downloader, prefix: str):
-  ids = extract_ids_from_list(inputs, extractor)
-  function(ids, downloader)
-  list_txt_organizer(inputs, prefix)
-  logger.log(5, 'URLs/IDs added to completed list.')
+def download_album_or_user(option, namespace):
+    inputs = input('\n0 - Back.\n'
+                   f'Enter {"album" if option == "1" else "user"} URL or ID.\n> ')
+    cls()
+    if inputs == '0':
+        return
+    namespace.album_inputs = inputs if option == '1' else None
+    namespace.user_inputs = inputs if option in ('2', '3') else None
+    namespace.only_favorites = option == '3'
+    start(namespace)
+    list_txt_organizer(inputs_string_to_list(inputs), 'album' if option == '1' else 'user')
+    logger.log(5, 'URLs/IDs added to completed list.')
+
+
+def search_by_keyword(namespace):
+    keyword = input('\n0 - Back\nEnter keyword\n> ')
+    if not keyword:
+        return print('Please enter a keyword.\n')
+    if keyword == '0':
+        return cls()
+    page = input('Enter starting page number or leave blank\n> ')
+    page = int(page) if is_a_valid_integer(page) else 1
+    max_pages = input('Enter max page or leave blank\n> ')
+    max_pages = int(max_pages) if is_a_valid_integer(max_pages) else 1
+    search_download = input('Download search results? ("Y/N") ').strip()
+    search_download = search_download in 'yY' and search_download != ''
+    namespace.keyword = keyword
+    namespace.search_download = search_download
+    namespace.page = page
+    namespace.max_pages = max_pages
+    start(namespace)
+
+
+def download_from_list(namespace):
+    list_txt = read_list(get_root_path())
+    if not len(list_txt):
+        return logger.log(5, 'List.txt is empty.')
+    namespace.album_inputs = ','.join(list_txt)
+    start(namespace)
+    list_txt_organizer(list_txt, 'album')
+    logger.log(5, 'URLs/IDs added to completed list.')
 
 
 def menu() -> None:
-  """Menu"""
-  info()
-  create_default_files()
-  logger_file_handler()
-  output_dir = os.path.abspath(os.path.normcase(get_config_setting('directory')))
-  pool_size = get_config_setting('pool')
-  retries = get_config_setting('retries')
-  timeout = get_config_setting('timeout')
-  delay = get_config_setting('delay')
+    """Menu"""
+    info()
+    create_default_files()
+    logger_file_handler()
+    base_namespace = load_settings()
 
-  downloader = Downloader(output_dir, pool_size, retries, timeout, delay)
+    while True:
+        showMenu()
+        option = input('> ')
 
-  while True:
-    option = input('Options:\n'
-                   '1 - Download albums by URL or ID.\n'
-                   '2 - Download all user albums\n'
-                   '3 - Download albums from list.txt.\n'
-                   '4 - Settings.\n'
-                   '0 - Exit.\n'
-                   '> ')
-    cls()
+        if option in ('1', '2', '3'):
+            download_album_or_user(option, copy(base_namespace))
 
-    if option in ['1', '2']:
-      inputs = input(f'0 - Back.\nEnter {"album" if option == "1" else "user"} URL or ID.\n> ')
-      if inputs != '0':
-        cls()
-        download(albums_download if option == '1' else users_download,
-                 [input_.strip() for input_ in inputs.split(',')],
-                 extract_album_id if option == '1' else extract_user_id,
-                 downloader,
-                 'album' if option == '1' else 'user'
-                 )
+        elif option == '4':
+            search_by_keyword(copy(base_namespace))
 
-    elif option == '3':
-      list_txt = read_list()
-      download(albums_download, list_txt, extract_album_id, downloader, 'album')
+        elif option == '5':
+            download_from_list(copy(base_namespace))
 
-    elif option == '4':
-      open_config_menu()
+        elif option == '6':
+            open_config_menu()
+            base_namespace = load_settings()
 
-    elif option == '0':
-      exit()
+        elif option == '0':
+            exit()
 
-    else:
-      print('Invalid Option.\n')
+        else:
+            print('Invalid Option.\n')
 
 
 if __name__ == '__main__':
-  menu()
+    menu()
